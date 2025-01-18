@@ -7,8 +7,12 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AI Grading Platform',
-  description: 'A modern platform for academic grading and feedback',
+  title: 'GradePro',
+  description: 'Empowering education through intelligent grading solutions',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({

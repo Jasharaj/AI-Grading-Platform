@@ -24,7 +24,7 @@ interface Course {
   assignments: Assignment[];
 }
 
-const courses: Course[] = [
+const initialCourses: Course[] = [
   {
     id: '1',
     code: 'CS101',
@@ -79,30 +79,47 @@ const courses: Course[] = [
 ];
 
 export default function AssignmentsPage() {
+  const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleFileUpload = (file: File) => {
-    if (selectedAssignment) {
+    setSelectedFile(file);
+  };
+
+  const handleSubmit = () => {
+    if (selectedFile && selectedAssignment && selectedCourse) {
       // Here you would typically handle the file upload to your backend
-      console.log(`Uploading file ${file.name} for assignment ${selectedAssignment.id}`);
+      console.log(`Uploading file ${selectedFile.name} for assignment ${selectedAssignment.id}`);
       
-      // Update the assignment status
-      if (selectedCourse) {
-        const updatedCourse = {
-          ...selectedCourse,
-          assignments: selectedCourse.assignments.map(assignment =>
-            assignment.id === selectedAssignment.id
-              ? { ...assignment, status: 'submitted' as const }
-              : assignment
-          )
-        };
-        setSelectedCourse(updatedCourse);
-      }
+      // Update both the courses array and selected course
+      const updatedCourses = courses.map(course => {
+        if (course.id === selectedCourse.id) {
+          return {
+            ...course,
+            assignments: course.assignments.map(assignment =>
+              assignment.id === selectedAssignment.id
+                ? { ...assignment, status: 'submitted' as const }
+                : assignment
+            )
+          };
+        }
+        return course;
+      });
       
-      setShowUploadModal(false);
-      setSelectedAssignment(null);
+      setCourses(updatedCourses);
+      setSelectedCourse(updatedCourses.find(c => c.id === selectedCourse.id) || null);
+      
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setShowUploadModal(false);
+        setSelectedAssignment(null);
+        setSelectedFile(null);
+      }, 2000);
     }
   };
 
@@ -229,6 +246,7 @@ export default function AssignmentsPage() {
                 onClick={() => {
                   setShowUploadModal(false);
                   setSelectedAssignment(null);
+                  setSelectedFile(null);
                 }}
                 className="text-gray-400 hover:text-gray-500"
               >
@@ -265,19 +283,42 @@ export default function AssignmentsPage() {
                   <p className="text-xs text-gray-500">
                     PDF, DOC, DOCX up to 10MB
                   </p>
+                  {selectedFile && (
+                    <p className="text-sm text-green-600 mt-2">
+                      Selected file: {selectedFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
+
+            {showSuccess && (
+              <div className="mt-4 p-2 bg-green-100 text-green-700 rounded-md text-center">
+                Assignment submitted successfully!
+              </div>
+            )}
 
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => {
                   setShowUploadModal(false);
                   setSelectedAssignment(null);
+                  setSelectedFile(null);
                 }}
                 className="mr-3 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={!selectedFile}
+                className={`inline-flex justify-center px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
+                  selectedFile
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-purple-400 cursor-not-allowed'
+                }`}
+              >
+                Submit
               </button>
             </div>
           </div>
