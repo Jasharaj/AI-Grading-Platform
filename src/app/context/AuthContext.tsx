@@ -26,9 +26,9 @@ type AuthAction =
   | { type: 'LOGOUT' };
 
 const initialState: AuthState = {
-  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-  role: localStorage.getItem('role') || null,
-  token: localStorage.getItem('token') || null,
+  user: null,
+  role: null,
+  token: null,
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,9 +66,36 @@ export const AuthContextProvider = ({
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
-    localStorage.setItem('user', JSON.stringify(state.user));
-    localStorage.setItem('token', state.token || '');
-    localStorage.setItem('role', state.role || '');
+    // Initialize state from localStorage when component mounts (client-side only)
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const storedRole = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+
+    if (storedUser && storedToken && storedRole) {
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: {
+          user: JSON.parse(storedUser),
+          token: storedToken,
+          role: storedRole,
+        },
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Update localStorage when state changes (client-side only)
+    if (typeof window !== 'undefined') {
+      if (state.user) {
+        localStorage.setItem('user', JSON.stringify(state.user));
+        localStorage.setItem('token', state.token || '');
+        localStorage.setItem('role', state.role || '');
+      } else {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+      }
+    }
   }, [state]);
 
   return (
