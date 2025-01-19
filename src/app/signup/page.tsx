@@ -57,13 +57,13 @@ export default function SignupPage() {
 
   const getIdField = () => {
     if (!formData.role) return null;
-    
+
     const labels = {
       'Faculty': 'Faculty ID',
       'TA': 'TA ID',
       'Student': 'Student ID'
     };
-    
+
     return (
       <Input
         label={labels[formData.role as keyof typeof labels]}
@@ -148,8 +148,11 @@ export default function SignupPage() {
           </form>
         </div>
         <div className="max-md:hidden">
-          {/* Add your signup page illustration or image here */}
-          <div className="w-full h-96 bg-purple-100 rounded-lg"></div>
+          <img
+            src="https://readymadeui.com/login-image.webp"
+            className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover rounded-lg"
+            alt="Login"
+          />
         </div>
       </div>
     </div>

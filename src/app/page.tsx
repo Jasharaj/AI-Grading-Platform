@@ -103,11 +103,11 @@ export default function Home() {
             </div>
             <div className="md:w-1/2 relative animate-float">
               <div className="absolute inset-0 bg-purple-600 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
-              <Image 
-                src="/hero-image.svg" 
+              <img 
+                src="https://img.freepik.com/free-vector/grades-concept-illustration_114360-5958.jpg"
                 alt="Platform Preview" 
-                width={600} 
-                height={400} 
+                width={600}
+                height={400}
                 className="relative rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-500"
               />
             </div>
