@@ -1,13 +1,34 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import EvaluationRow from '@/app/components/EvaluationRow';
 import { Select } from '@/app/components/common/Select';
 import { Input } from '@/app/components/common/Input';
 import { useSubmissionStore } from '@/app/store/submissions';
 
-export default function Evaluate() {
+// Loading component
+function LoadingState() {
+  return (
+    <div className="p-6">
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="h-10 bg-gray-200 rounded"></div>
+        </div>
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component
+function EvaluateContent() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -38,7 +59,6 @@ export default function Evaluate() {
     feedback: string;
   }) => {
     if (submissionId) {
-      // Update existing submission
       updateSubmission({
         id: submissionId,
         ...evaluation,
@@ -46,7 +66,6 @@ export default function Evaluate() {
         isEditing: false
       });
     } else {
-      // Add new submission
       const newSubmission = {
         id: `SUB${Math.random().toString(36).substr(2, 9)}`,
         ...evaluation,
@@ -58,9 +77,7 @@ export default function Evaluate() {
     router.push('/ta/submissions');
   };
 
-  // Filter students based on selected course and search query
   const filteredStudents = students.filter(student => {
-    // If editing a submission, only show that student
     if (submissionId) {
       const submission = getSubmissionById(submissionId);
       return submission && student.id === submission.studentId;
@@ -79,7 +96,6 @@ export default function Evaluate() {
         {submissionId ? 'Edit Evaluation' : 'Evaluate Students'}
       </h1>
 
-      {/* Hide filters when editing */}
       {!submissionId && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Select
@@ -97,25 +113,28 @@ export default function Evaluate() {
         </div>
       )}
 
-      {/* Student List */}
       <div className="space-y-6">
-        {filteredStudents.length > 0 ? (
-          filteredStudents.map((student) => (
-            <EvaluationRow
-              key={student.id}
-              student={student}
-              onSubmit={handleSubmitEvaluation}
-              initialSubmission={
-                submissionId ? getSubmissionById(submissionId) : undefined
-              }
-            />
-          ))
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No students found matching your criteria.</p>
-          </div>
+        {filteredStudents.map((student) => (
+          <EvaluationRow
+            key={student.id}
+            student={student}
+            submissionId={submissionId}
+            onSubmit={handleSubmitEvaluation}
+          />
+        ))}
+        {filteredStudents.length === 0 && (
+          <p className="text-gray-500 text-center py-8">No students found matching your criteria.</p>
         )}
       </div>
     </div>
+  );
+}
+
+// Export default component with Suspense
+export default function Evaluate() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <EvaluateContent />
+    </Suspense>
   );
 }
