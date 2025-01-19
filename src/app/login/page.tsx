@@ -2,14 +2,18 @@
 
 import { useState } from 'react';
 import Input from '../components/Input';
+import { useRouter } from 'next/navigation';
+import { BASE_URL } from '../config';
+// import toast from '../components/Toast';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     role: '',
     id: '',
-    email: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -18,10 +22,51 @@ export default function LoginPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log(formData);
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message);
+      }
+
+      // Store the token and user data in localStorage or state management
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('user', JSON.stringify(result.data));
+
+      setLoading(false);
+
+      // Role-based routing
+      switch (formData.role) {
+        case 'Faculty':
+          router.push('/faculty');
+          break;
+        case 'TA':
+          router.push('/TA');
+          break;
+        case 'Student':
+          router.push('/student');
+          break;
+        default:
+          throw new Error('Invalid role');
+      }
+      
+      // toast.success('Login successful!');
+    } catch (err: any) {
+      setLoading(false);
+      // toast.error(err.message || 'Something went wrong');
+    }
   };
 
   return (
@@ -63,15 +108,6 @@ export default function LoginPage() {
             )}
 
             <Input
-              label="Email"
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-            />
-
-            <Input
               label="Password"
               id="password"
               type="password"
@@ -105,7 +141,7 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full shadow-xl py-2.5 px-4 text-sm font-semibold tracking-wide rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition-colors duration-200"
               >
-                Sign in
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
 

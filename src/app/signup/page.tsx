@@ -3,17 +3,20 @@
 import { useState } from 'react';
 import Input from '../components/Input';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { BASE_URL } from '../config';
+import toast from 'react-hot-toast';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     role: '',
     name: '',
     email: '',
     password: '',
-    facultyId: '',
-    taId: '',
-    studentId: ''
+    id: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -23,47 +26,53 @@ export default function SignupPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
-    // Add your signup logic here
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+
+      setLoading(false);
+      toast.success('Registration successful!');
+      router.push('/login');
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(err.message || 'Something went wrong');
+      console.error('Registration error:', err);
+    }
   };
 
   const getIdField = () => {
-    switch (formData.role) {
-      case 'Faculty':
-        return (
-          <Input
-            label="Faculty ID"
-            id="facultyId"
-            value={formData.facultyId}
-            onChange={handleChange}
-            placeholder="Enter your Faculty ID"
-          />
-        );
-      case 'TA':
-        return (
-          <Input
-            label="TA ID"
-            id="taId"
-            value={formData.taId}
-            onChange={handleChange}
-            placeholder="Enter your TA ID"
-          />
-        );
-      case 'Student':
-        return (
-          <Input
-            label="Student ID"
-            id="studentId"
-            value={formData.studentId}
-            onChange={handleChange}
-            placeholder="Enter your Student ID"
-          />
-        );
-      default:
-        return null;
-    }
+    if (!formData.role) return null;
+    
+    const labels = {
+      'Faculty': 'Faculty ID',
+      'TA': 'TA ID',
+      'Student': 'Student ID'
+    };
+    
+    return (
+      <Input
+        label={labels[formData.role as keyof typeof labels]}
+        id="id"
+        value={formData.id}
+        onChange={handleChange}
+        placeholder={`Enter your ${labels[formData.role as keyof typeof labels]}`}
+      />
+    );
   };
 
   return (
@@ -94,7 +103,7 @@ export default function SignupPage() {
               </select>
             </div>
 
-            {formData.role && getIdField()}
+            {getIdField()}
 
             <Input
               label="Name"
@@ -119,32 +128,28 @@ export default function SignupPage() {
               type="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Enter your password"
+              placeholder="Create a password"
             />
 
-            <div className="!mt-8">
-              <button
-                type="submit"
-                className="w-full shadow-xl py-2.5 px-4 text-sm font-semibold tracking-wide rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none transition-colors duration-200"
-              >
-                Create Account
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors"
+              disabled={loading}
+            >
+              {loading ? 'Signing up...' : 'Sign Up'}
+            </button>
 
-            <p className="text-sm !mt-8 text-center text-gray-500">
-              Already have an account?
-              <Link href="/login" className="text-purple-600 font-semibold hover:underline ml-1 whitespace-nowrap">
-                Sign in here
+            <p className="text-center text-sm text-gray-500">
+              Already have an account?{' '}
+              <Link href="/login" className="text-purple-600 hover:underline">
+                Login
               </Link>
             </p>
           </form>
         </div>
-        <div className="max-md:mt-8">
-          <img
-            src="https://readymadeui.com/login-image.webp"
-            className="w-full aspect-[71/50] max-md:w-4/5 mx-auto block object-cover rounded-lg"
-            alt="Signup"
-          />
+        <div className="max-md:hidden">
+          {/* Add your signup page illustration or image here */}
+          <div className="w-full h-96 bg-purple-100 rounded-lg"></div>
         </div>
       </div>
     </div>
