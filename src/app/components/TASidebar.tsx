@@ -10,10 +10,10 @@ import {
 } from '@heroicons/react/24/outline';
 
 const taNavigation = [
-  { name: 'Dashboard', href: '/ta', icon: HomeIcon },
-  { name: 'Evaluate Student', href: '/ta/evaluate', icon: ClipboardDocumentCheckIcon },
-  { name: 'View Submissions', href: '/ta/submissions', icon: ClipboardDocumentListIcon },
-  { name: 'Profile', href: '/ta/profile', icon: UserIcon },
+  { name: 'Dashboard', href: '/TA/dashboard', icon: HomeIcon },
+  { name: 'Evaluate Student', href: '/TA/evaluate', icon: ClipboardDocumentCheckIcon },
+  { name: 'View Submissions', href: '/TA/submissions', icon: ClipboardDocumentListIcon },
+  { name: 'Profile', href: '/TA/profile', icon: UserIcon },
 ];
 
 const TASidebar = () => {
