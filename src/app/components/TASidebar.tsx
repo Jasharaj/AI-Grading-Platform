@@ -7,12 +7,14 @@ import {
   ClipboardDocumentCheckIcon,
   ClipboardDocumentListIcon,
   UserIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 
 const taNavigation = [
   { name: 'Dashboard', href: '/TA/dashboard', icon: HomeIcon },
   { name: 'Evaluate Student', href: '/TA/evaluate', icon: ClipboardDocumentCheckIcon },
   { name: 'View Submissions', href: '/TA/submissions', icon: ClipboardDocumentListIcon },
+  { name: 'AI Plagiarism Check', href: '/TA/plagiarism-check', icon: ShieldExclamationIcon },
   { name: 'Profile', href: '/TA/profile', icon: UserIcon },
 ];
 

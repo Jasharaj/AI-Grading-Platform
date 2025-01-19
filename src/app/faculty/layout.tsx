@@ -7,6 +7,7 @@ const sidebarItems = [
   { title: 'Student Management', path: '/faculty/students' },
   { title: 'TA Management', path: '/faculty/tas' },
   { title: 'Grading and Feedback', path: '/faculty/grading' },
+  { title: 'Analytics', path: '/faculty/analytics' },
   { title: 'Profile', path: '/faculty/profile' },
 ];
 

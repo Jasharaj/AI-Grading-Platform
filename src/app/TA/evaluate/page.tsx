@@ -118,8 +118,8 @@ function EvaluateContent() {
           <EvaluationRow
             key={student.id}
             student={student}
-            submissionId={submissionId}
             onSubmit={handleSubmitEvaluation}
+            initialSubmission={submissionId ? getSubmissionById(submissionId) : undefined}
           />
         ))}
         {filteredStudents.length === 0 && (

@@ -41,6 +41,7 @@ const facultyNavigation = [
   { name: 'Student Management', href: '/faculty/students', icon: UserGroupIcon },
   { name: 'TA Management', href: '/faculty/tas', icon: UserGroupIcon },
   { name: 'Grading and Feedback', href: '/faculty/grading', icon: ClipboardDocumentCheckIcon },
+  { name: 'Analytics', href: '/faculty/analytics', icon: ClipboardDocumentListIcon },
   { name: 'Profile', href: '/faculty/profile', icon: UserIcon },
 ];
 
