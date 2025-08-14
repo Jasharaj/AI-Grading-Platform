@@ -1,5 +1,6 @@
 import React from 'react';
 import ResponsiveLayout from '../components/common/ResponsiveLayout';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function FacultyLayout({
   children,
@@ -7,8 +8,10 @@ export default function FacultyLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ResponsiveLayout role="faculty">
-      {children}
-    </ResponsiveLayout>
+    <ProtectedRoute allowedRoles={['Faculty']} redirectTo="/login">
+      <ResponsiveLayout role="faculty">
+        {children}
+      </ResponsiveLayout>
+    </ProtectedRoute>
   );
 }

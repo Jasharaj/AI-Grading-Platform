@@ -84,16 +84,26 @@ export const AuthContextProvider = ({
   }, []);
 
   useEffect(() => {
-    // Update localStorage when state changes (client-side only)
+    // Update localStorage and cookies when state changes (client-side only)
     if (typeof window !== 'undefined') {
       if (state.user) {
         localStorage.setItem('user', JSON.stringify(state.user));
         localStorage.setItem('token', state.token || '');
         localStorage.setItem('role', state.role || '');
+        
+        // Also set cookies for server-side access
+        document.cookie = `user=${JSON.stringify(state.user)}; path=/; max-age=1296000`; // 15 days
+        document.cookie = `token=${state.token}; path=/; max-age=1296000`; // 15 days
+        document.cookie = `role=${state.role}; path=/; max-age=1296000`; // 15 days
       } else {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        
+        // Clear cookies
+        document.cookie = 'user=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+        document.cookie = 'role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
       }
     }
   }, [state]);

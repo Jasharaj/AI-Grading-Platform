@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BASE_URL } from '../config';
 import Link from 'next/link';
@@ -17,7 +17,28 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { dispatch } = useAuth();
+  const { dispatch, user, role, token } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && token && role) {
+      const dashboardRoute = getDashboardRoute(role);
+      router.push(dashboardRoute);
+    }
+  }, [user, token, role, router]);
+
+  const getDashboardRoute = (userRole: string): string => {
+    switch (userRole) {
+      case 'Student':
+        return '/student';
+      case 'Faculty':
+        return '/faculty';
+      case 'TA':
+        return '/TA';
+      default:
+        return '/login';
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({

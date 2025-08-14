@@ -1,6 +1,7 @@
 'use client';
 
 import ResponsiveLayout from '../components/common/ResponsiveLayout';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function StudentLayout({
   children,
@@ -8,8 +9,10 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ResponsiveLayout role="student">
-      {children}
-    </ResponsiveLayout>
+    <ProtectedRoute allowedRoles={['Student']} redirectTo="/login">
+      <ResponsiveLayout role="student">
+        {children}
+      </ResponsiveLayout>
+    </ProtectedRoute>
   );
 }

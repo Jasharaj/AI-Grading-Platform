@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ResponsiveLayout from '../components/common/ResponsiveLayout';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function TALayout({
   children,
@@ -9,8 +10,10 @@ export default function TALayout({
   children: React.ReactNode;
 }) {
   return (
-    <ResponsiveLayout role="ta">
-      {children}
-    </ResponsiveLayout>
+    <ProtectedRoute allowedRoles={['TA']} redirectTo="/login">
+      <ResponsiveLayout role="ta">
+        {children}
+      </ResponsiveLayout>
+    </ProtectedRoute>
   );
 }
