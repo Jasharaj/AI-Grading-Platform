@@ -1,331 +1,355 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card } from '@/app/components/common/Card';
-import { Button } from '@/app/components/common/Button';
-import { Select } from '@/app/components/common/Select';
-import { Progress } from '@/app/components/common/Progress';
-import { Table } from '@/app/components/common/Table';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import { BASE_URL } from '../../config';
+import { 
+  UserGroupIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  EnvelopeIcon,
+  AcademicCapIcon,
+  ChartBarIcon,
+  TrashIcon,
+  EyeIcon,
+  ExclamationTriangleIcon,
+  PhoneIcon,
+  StarIcon
+} from '@heroicons/react/24/outline';
 
 interface TA {
-  taId: string;
+  _id: string;
+  id: string;
   name: string;
   email: string;
-  assignedCourses: string[];
-  gradingMetrics: {
-    courseId: string;
-    assignmentsGraded: number;
-    pendingAssignments: number;
-    averageGradingTime: number;
-  }[];
+  phone?: string;
+  courses?: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Course {
   id: string;
   name: string;
-  assignedTAs: string[];
 }
 
-interface Assignment {
-  id: string;
-  title: string;
-  courseId: string;
-  assignedTA: string;
-  totalSubmissions: number;
-  gradedSubmissions: number;
-}
+export default function TAManagement() {
+  const { user, token } = useAuth();
+  const [selectedCourse, setSelectedCourse] = useState<string>('cs101'); // Default course
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tas, setTAs] = useState<TA[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-const validateTaId = (taId: string): boolean => /^TA\d{3}$/.test(taId);
+  const fetchTAs = async () => {
+    if (!token) {
+      setError('Authentication token not found. Please login again.');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${BASE_URL}/faculty/tas`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('TAs API endpoint not found. Please check the server configuration.');
+        }
+        throw new Error(`Failed to fetch TAs: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('TAs data:', data);
+      
+      if (!data.success || !data.data) {
+        throw new Error('Invalid TAs data received');
+      }
+      
+      setTAs(data.data);
+    } catch (err) {
+      console.error('Error fetching TAs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load TAs');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const TACard = ({ ta, courses, onRemove }: { ta: TA; courses: Course[]; onRemove: (taId: string) => void }) => (
-  <Card className="h-full">
-    <div className="space-y-4">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-semibold text-black">{ta.name}</h3>
-          <p className="text-sm text-black/60 mt-1">ID: {ta.taId}</p>
-          <p className="text-sm text-black/60">{ta.email}</p>
+  useEffect(() => {
+    if (user && token) {
+      const timer = setTimeout(() => {
+        fetchTAs();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, token]);
+
+  // Mock data for courses - in real app, this would come from an API
+  const courses: Course[] = [
+    { id: 'cs101', name: 'Introduction to Computer Science' },
+    { id: 'cs201', name: 'Data Structures' },
+    { id: 'cs301', name: 'Algorithms' },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading TAs...</p>
         </div>
-        <Button variant="text" color="danger" onClick={() => onRemove(ta.taId)}>
-          Remove
-        </Button>
       </div>
-      <div className="space-y-3">
-        <h4 className="font-medium text-black">Assigned Courses:</h4>
-        <div className="space-y-4">
-          {ta.assignedCourses.map((courseId) => {
-            const course = courses.find(c => c.id === courseId);
-            const metrics = ta.gradingMetrics.find(m => m.courseId === courseId);
-            return (
-              <div key={courseId} className="bg-black/5 p-3 rounded-lg">
-                <p className="font-medium text-black mb-2">{course?.name}</p>
-                {metrics && (
-                  <div className="grid grid-cols-2 gap-2 text-sm text-black/60">
-                    <span>Graded: {metrics.assignmentsGraded}</span>
-                    <span>Pending: {metrics.pendingAssignments}</span>
-                    <span>Avg. Time: {metrics.averageGradingTime}min</span>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading TAs</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchTAs}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const filteredTAs = tas.filter(ta =>
+    ta.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ta.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ta.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 space-y-8">
+      {/* Modern Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white rounded-2xl shadow-2xl">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 75%, white 2px, transparent 2px),
+                             radial-gradient(circle at 75% 25%, white 2px, transparent 2px)`,
+            backgroundSize: '40px 40px'
+          }}></div>
+        </div>
+        
+        <div className="relative px-8 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/30">
+                <UserGroupIcon className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">TA Management</h1>
+                <p className="text-purple-100 mt-1">Manage your teaching assistants and track their progress</p>
+              </div>
+            </div>
+            {selectedCourse && (
+              <button
+                onClick={() => toast('Add TA functionality coming soon!')}
+                className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center space-x-2 border border-white/30 hover:border-white/50 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span className="font-medium">Add TA</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Course Selection */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
+            <select
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white"
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+            >
+              <option value="">Choose a course to manage TAs</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {selectedCourse && (
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 mt-3" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search TAs</label>
+              <input
+                type="text"
+                placeholder="Search by name, email, or ID..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selectedCourse && (
+        <>
+          {/* TAs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredTAs.map((ta) => {
+              // Get the assignment count for this TA
+              const taAssignmentCount = assignments.filter((assignment: any) => 
+                assignment.assignedTo === ta._id
+              ).length;
+
+              // Get the graded assignment count for this TA
+              const gradedCount = submissions.filter((sub: any) => 
+                sub.gradedBy === ta._id && sub.grade !== undefined && sub.grade !== null
+              ).length;
+
+              return (
+                <div key={ta._id} className="group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden">
+                  {/* Hover Effect Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  
+                  <div className="p-6 relative z-10">
+                    {/* TA Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          {ta.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-700 transition-colors duration-200">
+                            {ta.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">ID: {ta.id}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${ta.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {ta.isActive ? 'Active' : 'Inactive'}
+                        </div>
+                        <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200">
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Contact Info */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <EnvelopeIcon className="h-4 w-4" />
+                        <span>{ta.email}</span>
+                      </div>
+                      {ta.phone && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <PhoneIcon className="h-4 w-4" />
+                          <span>{ta.phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-blue-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-bold text-blue-600">{taAssignmentCount}</div>
+                        <div className="text-xs text-blue-600">Assigned</div>
+                      </div>
+                      <div className="bg-green-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-bold text-green-600">{gradedCount}</div>
+                        <div className="text-xs text-green-600">Graded</div>
+                      </div>
+                    </div>
+
+                    {/* Courses */}
+                    {ta.courses && ta.courses.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 mb-2">Courses:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {ta.courses.map((course, index) => (
+                            <span key={index} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                              {course}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* TA Info */}
+                  <div className="text-sm text-gray-500">
+                    <p>Joined: {ta.createdAt && ta.createdAt !== 'Invalid Date' ? new Date(ta.createdAt).toLocaleDateString() : 'Recently'}</p>
+                    {ta.updatedAt && ta.updatedAt !== ta.createdAt && ta.updatedAt !== 'Invalid Date' && (
+                      <p>Updated: {new Date(ta.updatedAt).toLocaleDateString()}</p>
+                    )}
                   </div>
-                )}
+                </div>
+                
+                {/* Hover Effect Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
               </div>
             );
           })}
-        </div>
-      </div>
-    </div>
-  </Card>
-);
+          </div>
 
-export default function TAManagement() {
-  const [showAssignForm, setShowAssignForm] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [isNewTA, setIsNewTA] = useState(false);
-  const [taInfo, setTaInfo] = useState({ taId: '', name: '', email: '' });
-
-  const [courses] = useState<Course[]>([
-    { id: 'cs101', name: 'Introduction to Computer Science', assignedTAs: ['TA001', 'TA002'] },
-    { id: 'cs201', name: 'Data Structures', assignedTAs: ['TA002'] },
-  ]);
-
-  const [tas, setTAs] = useState<TA[]>([
-    {
-      taId: 'TA001',
-      name: 'Alex Johnson',
-      email: 'alex@university.edu',
-      assignedCourses: ['cs101'],
-      gradingMetrics: [{ courseId: 'cs101', assignmentsGraded: 45, pendingAssignments: 5, averageGradingTime: 15 }],
-    },
-    {
-      taId: 'TA002',
-      name: 'Sarah Williams',
-      email: 'sarah@university.edu',
-      assignedCourses: ['cs101', 'cs201'],
-      gradingMetrics: [
-        { courseId: 'cs101', assignmentsGraded: 50, pendingAssignments: 0, averageGradingTime: 12 },
-        { courseId: 'cs201', assignmentsGraded: 35, pendingAssignments: 15, averageGradingTime: 18 },
-      ],
-    },
-  ]);
-
-  const [assignments] = useState<Assignment[]>([
-    { id: '1', title: 'Programming Basics', courseId: 'cs101', assignedTA: 'TA001', totalSubmissions: 50, gradedSubmissions: 45 },
-    { id: '2', title: 'Arrays and Loops', courseId: 'cs101', assignedTA: 'TA002', totalSubmissions: 50, gradedSubmissions: 50 },
-  ]);
-
-  const handleAssignTA = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCourse) {
-      toast.error('Please select a course');
-      return;
-    }
-
-    if (isNewTA) {
-      if (!validateTaId(taInfo.taId)) {
-        toast.error('TA ID must be in format TA### (e.g., TA001)');
-        return;
-      }
-      if (tas.some(ta => ta.taId === taInfo.taId)) {
-        toast.error('TA ID already exists');
-        return;
-      }
-      setTAs(prev => [...prev, {
-        ...taInfo,
-        assignedCourses: [selectedCourse],
-        gradingMetrics: [{
-          courseId: selectedCourse,
-          assignmentsGraded: 0,
-          pendingAssignments: 0,
-          averageGradingTime: 0
-        }],
-      }]);
-      toast.success('New TA added and assigned to course successfully!');
-    } else {
-      const ta = tas.find(t => t.taId === taInfo.taId);
-      if (!ta) {
-        toast.error('Please select a valid TA');
-        return;
-      }
-      if (ta.assignedCourses.includes(selectedCourse)) {
-        toast.error('TA is already assigned to this course');
-        return;
-      }
-      setTAs(prev => prev.map(t => t.taId === taInfo.taId ? {
-        ...t,
-        assignedCourses: [...t.assignedCourses, selectedCourse],
-        gradingMetrics: [...t.gradingMetrics, {
-          courseId: selectedCourse,
-          assignmentsGraded: 0,
-          pendingAssignments: 0,
-          averageGradingTime: 0
-        }]
-      } : t));
-      toast.success('TA assigned to course successfully!');
-    }
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setShowAssignForm(false);
-    setSelectedCourse('');
-    setTaInfo({ taId: '', name: '', email: '' });
-    setIsNewTA(false);
-  };
-
-  const handleRemoveTA = (taId: string) => {
-    if (assignments.some(a => a.assignedTA === taId)) {
-      toast.error('Cannot remove TA with active assignments. Please reassign their tasks first.');
-      return;
-    }
-    if (window.confirm('Are you sure you want to remove this TA?')) {
-      setTAs(prev => prev.filter(ta => ta.taId !== taId));
-      toast.success('TA removed successfully!');
-    }
-  };
-
-  const handleReassignTask = (assignmentId: string, newTaId: string) => {
-    if (!newTaId) return;
-    const assignment = assignments.find(a => a.id === assignmentId);
-    const newTA = tas.find(ta => ta.taId === newTaId);
-    if (assignment && newTA && !newTA.assignedCourses.includes(assignment.courseId)) {
-      toast.error('Selected TA is not assigned to this course');
-      return;
-    }
-    toast.success('Assignment reassigned successfully!');
-  };
-
-  const assignmentColumns = [
-    { key: 'title', header: 'Assignment' },
-    { key: 'courseId', header: 'Course', render: (_: any, row: Assignment) => courses.find(c => c.id === row.courseId)?.name },
-    { key: 'assignedTA', header: 'Assigned TA', render: (_: any, value: string) => {
-      const ta = tas.find(t => t.taId === value);
-      return `${ta?.taId} - ${ta?.name}`;
-    }},
-    { key: 'progress', header: 'Progress', render: (_: any, row: Assignment) => (
-      <Progress value={row.gradedSubmissions} max={row.totalSubmissions} />
-    )},
-    { key: 'actions', header: 'Actions', render: (_: any, row: Assignment) => (
-      <Select
-        options={[
-          { value: '', label: 'Reassign to' },
-          ...tas
-            .filter(ta => ta.taId !== row.assignedTA)
-            .map(ta => ({ value: ta.taId, label: `${ta.taId} - ${ta.name}` }))
-        ]}
-        value=""
-        onChange={(e) => handleReassignTask(row.id, e.target.value)}
-      />
-    )}
-  ];
-
-  return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-black">TA Management</h1>
-        <Button variant="primary" onClick={() => setShowAssignForm(true)}>
-          Assign TA to Course
-        </Button>
-      </div>
-
-      {showAssignForm && (
-        <Card className="mb-8">
-          <form onSubmit={handleAssignTA} className="space-y-6 p-2">
-            <div className="grid grid-cols-1 gap-6">
-              <Select
-                options={[
-                  { value: '', label: 'Select a course' },
-                  ...courses.map(c => ({ value: c.id, label: c.name }))
-                ]}
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-              />
-
-              <div className="flex items-center space-x-6">
-                <label className="inline-flex items-center">
-                  <input 
-                    type="radio" 
-                    checked={!isNewTA} 
-                    onChange={() => setIsNewTA(false)}
-                    className="form-radio text-purple-600 h-5 w-5" 
-                  />
-                  <span className="ml-2 text-black">Existing TA</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input 
-                    type="radio" 
-                    checked={isNewTA} 
-                    onChange={() => setIsNewTA(true)}
-                    className="form-radio text-purple-600 h-5 w-5" 
-                  />
-                  <span className="ml-2 text-black">New TA</span>
-                </label>
+          {/* Empty State */}
+          {filteredTAs.length === 0 && searchTerm && (
+            <div className="text-center py-16">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-12 max-w-md mx-auto">
+                <MagnifyingGlassIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-2">No TAs found</h3>
+                <p className="text-gray-500 mb-6">Try adjusting your search terms.</p>
               </div>
-
-              {isNewTA ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="TA ID (e.g., TA001)" 
-                    value={taInfo.taId}
-                    onChange={(e) => setTaInfo({ ...taInfo, taId: e.target.value })}
-                    className="w-full rounded-lg border border-black/20 px-4 py-2.5 text-black focus:border-purple-500" 
-                  />
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="Name" 
-                    value={taInfo.name}
-                    onChange={(e) => setTaInfo({ ...taInfo, name: e.target.value })}
-                    className="w-full rounded-lg border border-black/20 px-4 py-2.5 text-black focus:border-purple-500" 
-                  />
-                  <input 
-                    type="email" 
-                    required 
-                    placeholder="Email" 
-                    value={taInfo.email}
-                    onChange={(e) => setTaInfo({ ...taInfo, email: e.target.value })}
-                    className="md:col-span-2 w-full rounded-lg border border-black/20 px-4 py-2.5 text-black focus:border-purple-500" 
-                  />
-                </div>
-              ) : (
-                <Select
-                  options={[
-                    { value: '', label: 'Select a TA' },
-                    ...tas.map(ta => ({ value: ta.taId, label: `${ta.taId} - ${ta.name}` }))
-                  ]}
-                  value={taInfo.taId}
-                  onChange={(e) => {
-                    const selectedTA = tas.find(ta => ta.taId === e.target.value);
-                    if (selectedTA) setTaInfo(selectedTA);
-                  }}
-                />
-              )}
             </div>
+          )}
 
-            <div className="flex justify-end space-x-4 pt-4">
-              <Button variant="secondary" onClick={resetForm}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary">
-                {isNewTA ? 'Add & Assign TA' : 'Assign TA'}
-              </Button>
+          {filteredTAs.length === 0 && !searchTerm && tas.length === 0 && (
+            <div className="text-center py-16">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-12 max-w-md mx-auto">
+                <UserGroupIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-2">No TAs assigned</h3>
+                <p className="text-gray-500 mb-6">Get started by adding TAs to this course.</p>
+                <button
+                  onClick={() => toast('TAs will appear here when they are assigned to courses.')}
+                  className="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Refresh
+                </button>
+              </div>
             </div>
-          </form>
-        </Card>
+          )}
+        </>
       )}
 
-      <Card title="Teaching Assistants" className="mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tas.map(ta => <TACard key={ta.taId} ta={ta} courses={courses} onRemove={handleRemoveTA} />)}
+      {!selectedCourse && (
+        <div className="text-center py-16">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-12 max-w-md mx-auto">
+            <AcademicCapIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">Select a Course</h3>
+            <p className="text-gray-500">Choose a course from the dropdown above to view and manage TAs.</p>
+          </div>
         </div>
-      </Card>
-
-      <Card title="Assignment Distribution">
-        <Table 
-          columns={assignmentColumns}
-          data={assignments}
-        />
-      </Card>
+      )}
     </div>
   );
 }

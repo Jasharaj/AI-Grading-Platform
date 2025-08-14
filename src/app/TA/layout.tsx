@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import TASidebar from '@/app/components/TASidebar';
+import ResponsiveLayout from '../components/common/ResponsiveLayout';
 
 export default function TALayout({
   children,
@@ -9,11 +9,8 @@ export default function TALayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <TASidebar />
-      <main className="flex-1 p-4">
-        {children}
-      </main>
-    </div>
+    <ResponsiveLayout role="ta">
+      {children}
+    </ResponsiveLayout>
   );
 }

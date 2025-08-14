@@ -9,7 +9,11 @@ export type Status =
   | 'active'
   | 'completed'
   | 'upcoming'
-  | 'resubmitted';
+  | 'resubmitted'
+  | 'submitted'
+  | 'success'
+  | 'primary'
+  | 'warning';
 
 interface StatusChipProps {
   status: Status;
@@ -51,6 +55,22 @@ const statusConfig = {
   'resubmitted': {
     color: 'bg-orange-100 text-orange-800',
     label: 'Resubmitted',
+  },
+  submitted: {
+    color: 'bg-blue-100 text-blue-800',
+    label: 'Submitted',
+  },
+  success: {
+    color: 'bg-green-100 text-green-800',
+    label: 'Success',
+  },
+  primary: {
+    color: 'bg-purple-100 text-purple-800',
+    label: 'Primary',
+  },
+  warning: {
+    color: 'bg-yellow-100 text-yellow-800',
+    label: 'Warning',
   },
 };
 
